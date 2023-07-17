@@ -29,16 +29,15 @@ contract MyToken {
     owner = newOwner;
   }
 
-  function mint(address to, uint256 amount) public returns (bool) {
-    require(msg.sender == owner, "Only the owner can mint tokens");
-    require(amount <= totalSupply - balances[to], "Not enough tokens");
+  function mint( uint256 amount) public returns (bool) {
+     require(balances[msg.sender] >= amount, "Not enough tokens"); 
     require(totalSupply + amount <= maxSupply, "Exceeds maximum supply"); 
-
-    balances[to] += amount;
-    totalSupply += amount;
-    emit Mint(to, amount);
-    emit Transfer(address(0), to, amount);
+    balances[msg.sender] -= amount;
+    totalSupply -= amount;
+    emit Burn(msg.sender, amount);
+    emit Transfer(msg.sender, address(0), amount);
     return true;
+  
   }
 
   function burn(uint256 amount) public returns (bool) {
@@ -58,3 +57,6 @@ contract MyToken {
     return true;
   }
 }
+
+
+  
