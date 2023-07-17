@@ -9,12 +9,12 @@ solidity ^0.8.0
 
 ## contract "MyToken" details
  * The MyToken contract is defined. It represents your custom token.
- * The name, symbol, owner, and totalSupply variables are declared. These store information about the token, such as its name, symbol, owner, and total supply.
+ * The name, symbol, owner, totalSupply and maxSupply variables are declared. These store information about the token, such as its name, symbol, owner, total supply and max supply.
  * The  balanceOf  mapping is defined. It maps an address to the token balance of that address.
  * The Transfer and Burn events are declared. These events will be emitted when token transfers and burns occur.
  * The constructor function is defined. It initializes the token's properties when the contract is deployed.
- * The function takes _name, _symbol, _owner as input parameters.
- * The values passed as arguments are assigned to the respective variables (name, symbol, owner, totalSupply).
+ * The function takes _name, _symbol, _owner, _maxSupply as input parameters.
+ * The values passed as arguments are assigned to the respective variables (name, symbol, owner, totalSupply, maxSupply).
  * The token's total supply is fixed as 1000000.
  * The balanceOf mapping is updated to assign the total supply to the contract deployer's address (msg.sender).
 
