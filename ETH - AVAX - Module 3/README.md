@@ -1,4 +1,4 @@
-# ETH-AVAX-Course-3
+# ETH-AVAX-Module-3
 ## MyToken
 In this we will write a smart contract to create your own token on a local HardHat network. Once we have your contract, you should be able to use remix to interact with it. From remix, the contract owner should be able to mint tokens to a provided address. Any user should be able to burn and transfer tokens.
 
