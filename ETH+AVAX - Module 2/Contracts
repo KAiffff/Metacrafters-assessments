@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.16;
+
+contract Assessment {
+    event Deposit(address indexed account, uint256 amount);
+    event Withdraw(address indexed account, uint256 amount);
+
+    mapping(address => uint256) public balanceOf;
+
+    function getBalanceFromWalletAddress(address walletAddress) public view returns (uint256) {
+        return balanceOf[walletAddress];
+    }
+
+    function depositAmount() public payable {
+        uint256 _amount = msg.value;
+        balanceOf[msg.sender] += _amount;
+        emit Deposit(msg.sender, _amount);
+    }
+
+    // Custom error
+    error InsufficientBalance(uint256 balance, uint256 withdrawAmount);
+
+    function withdrawAmount(uint256 _withdrawAmount) public {
+        uint256 _previousBalance = balanceOf[msg.sender];
+        if (balanceOf[msg.sender] < _withdrawAmount) {
+            revert InsufficientBalance({
+                balance: _previousBalance,
+                withdrawAmount: _withdrawAmount
+            });
+        }
+
+        // Withdraw amount
+        balanceOf[msg.sender] -= _withdrawAmount;
+        // Send the amount to the caller
+        payable(msg.sender).transfer(_withdrawAmount);
+
+        emit Withdraw(msg.sender, _withdrawAmount);
+    }
+
+    // Function to check the balance of an account
+    function checkBalance() public view returns (uint256) {
+        return balanceOf[msg.sender];
+    }
+}
