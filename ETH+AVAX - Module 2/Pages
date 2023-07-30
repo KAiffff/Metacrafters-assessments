@@ -178,7 +178,7 @@ export default function HomePage() {
     <main className="container">
       <header>
         <h1>HEY, WELCOME</h1>
-        <p>what do you want to do here:</p>
+        <p>The Metacrafters ATM</p>
       </header>
       {initUser()}
       <style jsx>
