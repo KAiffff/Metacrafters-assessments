@@ -1,6 +1,6 @@
 # React Metacrafters ATM
 
-This is a simple React component for a Metacrafters ATM application. It allows users to connect their MetaMask wallet, view their account balance, deposit and withdraw ETH, check the owner's name and a simple calculator with limited operations.
+This is a simple React component for a Metacrafters ATM application. It allows users to connect their MetaMask wallet, view their account balance, deposit and withdraw ETH, check the owner's name, view thier transactions history and a simple calculator with limited operations.
 
 ## Requirements
 
@@ -15,6 +15,8 @@ The Metacrafters ATM component provides the following features:
 - View user's account balance
 - Deposit ETH into the ATM
 - Withdraw ETH from the ATM
+- Check balance of another account
+- View user's transactions history
 
 
 
