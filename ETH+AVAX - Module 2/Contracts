@@ -40,7 +40,7 @@ contract Assessment {
     function balanceOf(address account) external view returns (uint256) {
         return balances[account];
     }
-
+ 
     function getOwnerName() external view returns (string memory) {
         return ownerName;
     }
