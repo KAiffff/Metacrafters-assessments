@@ -9,7 +9,7 @@ contract Assessment {
 
     struct Transaction {
         address sender;
-        uint256 amount;
+        uint256 amount; 
         uint256 timeStamp;
     }
 
