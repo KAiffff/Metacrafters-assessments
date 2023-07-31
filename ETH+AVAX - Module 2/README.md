@@ -22,9 +22,6 @@ The Metacrafters ATM component provides the following features:
 
 Please note that the component assumes you have set up and configured MetaMask in your browser.
 
-## Customization
-
-You can customize the UI elements, styles, and behavior of the Crypto ATM component according to your project's requirements. Modify the JSX structure, CSS styles, and event handlers to align with your application's design and functionality.
 
 ## Setup
 
