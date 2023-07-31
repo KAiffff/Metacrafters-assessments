@@ -1,39 +1,42 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import atm_abi from "../artifacts/contracts/Assessment.sol/Assessment.json";
 
-export default function HomePage() {
-  // State variables
+const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const atmABI = atm_abi.abi;
+
+const HomePage = () => {
   const [ethWallet, setEthWallet] = useState(undefined);
-  const [account, setAccount] = useState(undefined);
+  const [selectedAccount, setSelectedAccount] = useState(undefined);
   const [atm, setATM] = useState(undefined);
+  const [accounts, setAccounts] = useState([]);
   const [balance, setBalance] = useState(undefined);
-  const [otherAccount, setOtherAccount] = useState("");
-  const [otherAccountBalance, setOtherAccountBalance] = useState(undefined);
+  const [ownerName, setOwnerName] = useState(undefined);
   const [transactionHistory, setTransactionHistory] = useState([]);
 
-  // Contract address and ABI
-  const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-  const atmABI = atm_abi.abi;
-
-  // Function to set up the Metamask wallet
   const getWallet = async () => {
     if (window.ethereum) {
       setEthWallet(window.ethereum);
     }
-  };
 
-  // Function to handle connected account
-  const handleAccount = (account) => {
-    if (account) {
-      console.log("Account connected: ", account);
-      setAccount(account);
-    } else {
-      console.log("No account found");
+    if (ethWallet) {
+      const accounts = await ethWallet.request({ method: "eth_accounts" });
+      handleAccounts(accounts);
     }
   };
 
-  // Function to connect the Metamask wallet
+  const handleAccounts = (accounts) => {
+    if (accounts && accounts.length > 0) {
+      console.log("Account connected: ", accounts);
+      setAccounts(accounts);
+      setSelectedAccount(accounts[0]);
+    } else {
+      console.log("No account found");
+      setAccounts([]);
+      setSelectedAccount(undefined);
+    }
+  };
+
   const connectAccount = async () => {
     if (!ethWallet) {
       alert("MetaMask wallet is required to connect");
@@ -41,10 +44,12 @@ export default function HomePage() {
     }
 
     const accounts = await ethWallet.request({ method: "eth_requestAccounts" });
-    handleAccount(accounts);
+    handleAccounts(accounts);
+
+    // once wallet is set we can get a reference to our deployed contract
+    getATMContract();
   };
 
-  // Function to get the ATM contract
   const getATMContract = () => {
     const provider = new ethers.providers.Web3Provider(ethWallet);
     const signer = provider.getSigner();
@@ -53,175 +58,153 @@ export default function HomePage() {
     setATM(atmContract);
   };
 
-  // Function to get the account balance
   const getBalance = async () => {
     if (atm) {
+      console.log(atm);
       setBalance((await atm.getBalance()).toNumber());
     }
   };
 
-  // Function to get the balance of another account
-  const checkOtherAccountBalance = async () => {
-    if (!ethWallet) {
-      alert("Please install Metamask in order to use this ATM.");
-      return;
-    }
+  const getTransactionHistory = async () => {
+    if (atm) {
+      const historyLength = await atm.getEventHistoryLength();
+      const history = [];
+      for (let i = 0; i < historyLength; i++) {
+        const transaction = await atm.getTransaction(i);
 
-    if (!otherAccount) {
-      alert("Please enter another account address.");
-      return;
-    }
+        const timestamp = transaction[2].toString();
+        const date = new Date(timestamp * 1000);
+        const formattedDate = date.toLocaleString();
 
-    try {
-      const provider = new ethers.providers.Web3Provider(ethWallet);
-      const contract = new ethers.Contract(contractAddress, atmABI, provider);
-
-      const balance = await contract.balanceOf(otherAccount);
-      setOtherAccountBalance(balance.toNumber());
-    } catch (error) {
-      console.error("Error fetching balance:", error);
-      setOtherAccountBalance(undefined);
+        history.push({
+          sender: transaction[0],
+          amount: transaction[1].toString(),
+          timestamp: formattedDate,
+        });
+      }
+      setTransactionHistory(history);
     }
   };
 
-  // Function to deposit
-  const deposit = async () => {
+  const getOwner = async () => {
     if (atm) {
+      let tx = await atm.getOwner();
+      setOwnerName(tx);
+    }
+  };
+
+  const deposit = async () => {
+    if (atm && selectedAccount) {
       let tx = await atm.deposit(1);
       await tx.wait();
       getBalance();
-      addToTransactionHistory("Deposit", 1);
+      getTransactionHistory();
     }
   };
 
-  // Function to withdraw
   const withdraw = async () => {
-    if (atm) {
+    if (atm && selectedAccount) {
       let tx = await atm.withdraw(1);
       await tx.wait();
       getBalance();
-      addToTransactionHistory("Withdrawal", -1);
+      getTransactionHistory();
     }
-  };
-
-  // Function to transactions history
-  const addToTransactionHistory = (type, amount) => {
-    setTransactionHistory((prevHistory) => [...prevHistory, { type, amount }]);
-  };
-
-  // Function to initialize the user and get the balance
-  const initUser = () => {
-    // Check to see if user has Metamask
-    if (!ethWallet) {
-      return <p>Please install Metamask in order to use this ATM.</p>;
-    }
-
-    // Check to see if user is connected. If not, connect to their account
-    if (!account) {
-      return (
-        <button onClick={connectAccount}>Please connect your Metamask wallet</button>
-      );
-    }
-
-    if (balance === undefined) {
-      getBalance();
-    }
-
-    return (
-      <div>
-        <p>Your Account: {account}</p>
-        <p>Your Balance: {balance}</p>
-        <button onClick={deposit}>Deposit 1 ETH</button>
-        <button onClick={withdraw}>Withdraw 1 ETH</button>
-
-        <div>
-          <input
-            type="text"
-            value={otherAccount}
-            onChange={(e) => setOtherAccount(e.target.value)}
-            placeholder="Enter another account address"
-          />
-          <button onClick={checkOtherAccountBalance}>Check Balance of Another Account</button>
-          {otherAccountBalance !== undefined && (
-            <p>
-              Balance of {otherAccount}: {otherAccountBalance}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <h2>Transaction History</h2>
-          <ul>
-            {transactionHistory.map((transaction, index) => (
-              <li key={index}>
-                {transaction.type} - {transaction.amount} ETH
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    );
   };
 
   useEffect(() => {
     getWallet();
+    getOwner();
+    getBalance();
+    getTransactionHistory();
   }, []);
-
-  useEffect(() => {
-    if (account) {
-      // Once wallet is set and account is available, get a reference to the deployed contract
-      getATMContract();
-    }
-  }, [account]);
 
   return (
     <main className="container">
       <header>
-        <h1>HEY, WELCOME</h1>
-        <p>The Metacrafters ATM</p>
+        <h1 style={{ color: "red", fontFamily: "monospace" }}>
+          Welcome to the Metacrafter's ATM!
+        </h1>
       </header>
-      {initUser()}
-      <style jsx>
-        {`
-          .container {
-            text-align: center;
-            background-color: grey;
-            background-size: cover;
-            color: #fff;
-            font-family: "Algerian", serif;
-          }
-
-          header {
-            padding: 34px;
-          }
-
-          h1 {
-            font-family: "Arial", serif;
-            font-size: 70px;
-            margin-bottom: 20px;
-          }
-
-          p {
-            font-size: 22px;
-            margin-bottom: 20px;
-          }
-
-          button {
-            background-color: #4caf50;
-            color: #fff;
-            border: none;
-            padding: 20px 30px;
-            font-size: 20px;
-            cursor: pointer;
-          }
-
-          button:hover {
-            cursor: pointer;
-          }
-        `}
-      </style>
-    </main> 
+      <div>
+        {selectedAccount ? (
+          <p>Connected Account: {selectedAccount}</p>
+        ) : (
+          <button
+            onClick={connectAccount}
+            style={{
+              height: "5vh",
+              width: "20%",
+              backgroundColor: "black",
+              color: "white",
+              borderRadius: "10px",
+              cursor: "pointer",
+              border: "0px",
+              fontSize: "1rem",
+            }}
+          >
+            Connect your MetaMask wallet
+          </button>
+        )}
+      </div>
+      <div>
+        <h2>Account Balance: {balance} ETH</h2>
+      </div>
+      <div>
+        <button
+          style={{
+            height: "6vh",
+            width: "15%",
+            margin: "5px 10px",
+            backgroundColor: "green",
+            color: "white",
+            borderRadius: "5px",
+            cursor: "pointer",
+            border: "0px",
+            fontSize: "1rem",
+          }}
+          onClick={deposit}
+        >
+          Deposit 1 ETH
+        </button>
+        <button
+          style={{
+            height: "6vh",
+            width: "15%",
+            margin: "5px 10px",
+            backgroundColor: "red",
+            color: "white",
+            borderRadius: "5px",
+            cursor: "pointer",
+            border: "0px",
+            fontSize: "1rem",
+          }}
+          onClick={withdraw}
+        >
+          Withdraw 1 ETH
+        </button>
+      </div>
+      <div>
+        <h2>Transaction History:</h2>
+        {transactionHistory.map((transaction, index) => (
+          <div key={index}>
+            <p>Sender: {transaction.sender}</p>
+            <p>Amount: {transaction.amount}</p>
+            <p>Time: {transaction.timestamp}</p>
+            <hr />
+          </div>
+        ))}
+      </div>
+      <div>
+        <h2>Owner Name: {ownerName}</h2>
+      </div>
+      <style jsx>{`
+        .container {
+          text-align: center;
+        }
+      `}</style>
+    </main>
   );
-}
+};
 
+export default HomePage;
 
